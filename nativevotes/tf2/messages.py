@@ -75,3 +75,25 @@ class VoteFailed(UserMessageCreator):
         buffer.write_byte(translated_kwargs.reason)
 
     protobuf = None
+
+class CallVoteFailed(UserMessageCreator):
+    """Create a CallVoteFailed."""
+
+    message_name = "CallVoteFailed"
+    translatable_fields = []
+
+    def __init__(self, reason: int, time: int):
+        """Show a call vote failed panel.
+        
+        :param int reason: Failure reason (1-2, 5-10, 12-19).
+        :param int time: For failure reasons 2 and 8, time in seconds until client
+                can start another vote. 2 is per user, 8 is per vote type.
+        """
+        super().__init__(reason=reason, time=time)
+
+    def bitbuf(self, buffer, translated_kwargs):
+        """Send the CallVoteFailed with bitbuf."""
+        buffer.write_byte(translated_kwargs.reason)
+        buffer.write_short(translated_kwargs.time)
+
+    protobuf = None
