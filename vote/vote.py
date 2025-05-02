@@ -15,6 +15,8 @@ match GAME_NAME:
     case "tf":
         from .tf2.messages import VoteStart, VotePass, VoteFailed, CallVoteFailed
         from .tf2.types import VoteTypes, VotePassTypes, VoteFailedReason, CallVoteFailedReason
+        from .tf2.types import VOTE_PASS_DEFAULT_REASONS
+        from events.manager import game_event_manager
         multi_vote_types.append(VoteTypes.NEXT_LEVEL, VoteTypes.CUSTOM)
     case _:
         raise RuntimeError("Game not supported.")
@@ -38,7 +40,8 @@ def get_game_vote_in_progress() -> bool:
     """
     match GAME_NAME:
         case "tf" | "csgo":
-            return BaseEntity.find("vote_controller").get_network_property_int("m_iActiveIssueIndex") != -1
+            vote_controller = BaseEntity.find("vote_controller")
+            return vote_controller.get_network_property_int("m_iActiveIssueIndex") != -1
         case _:
             raise RuntimeError("Game not supported.")
 
@@ -68,8 +71,58 @@ class _Vote():
 
     @abstractmethod
     def send(self):
-        """Method for sending the vote. Must be implemented in subclass."""
+        """Method for sending the vote. Must be implemented in subclass.
+        
+        :raises NotImplementedError: Method not implemented in subclass.
+        """
         raise NotImplementedError("Must be implemented in subclass.")
+
+    def send_pass_custom(self, pass_reason: VotePassTypes | None = None,
+                         detail: str = "", index: int | None = None):
+        """Display a vote pass panel.
+        
+        :param VotePassTypes or None pass_reason: Optional reason for vote pass for
+                                                    a custom vote pass type.
+        :param str detail: Optional detail paramater for supported vote pass types.
+        :param int or None index: Optional client index to send to vote menu to.
+                                Will send vote to every client if not specified.
+        :raises RuntimeError: Game not supported.
+        """
+        if pass_reason is None:
+            default_reason = VOTE_PASS_DEFAULT_REASONS.get(self.vote_type)
+            if default_reason is None:
+                pass_reason = getattr(VotePassTypes, self.vote_type.name)
+            else:
+                pass_reason = default_reason
+        match GAME_NAME:
+            case "tf":
+                vote_pass = VotePass(pass_reason.value, detail, 0)
+            case _:
+                raise RuntimeError("Game not supported.")
+        if index is None:
+            vote_pass.send()
+        else:
+            vote_pass.send(index)
+
+    def send_fail(self, fail_reason: VoteFailedReason = VoteFailedReason.VOTE_FAILED_GENERIC,
+                  index: int | None = None):
+        """Display a vote fail panel.
+        
+        :param VoteFailedReason fail_reason: Reason for vote fail. Defaults to 
+                                            VoteFailedReason.VOTE_FAILED_GENERIC.
+        :param int or None index: Optional client index to send to vote menu to.
+                                Will send vote to every client if not specified.
+        :raises RuntimeError: Game not supported.
+        """
+        match GAME_NAME:
+            case "tf":
+                fail = VoteFailed(0, fail_reason.value)
+            case _:
+                raise RuntimeError("Game not supported.")
+        if index is None:
+            fail.send()
+        else:
+            fail.send(index)
 
     def _send(self, is_yes_no_vote: bool, index: int | None = None):
         """Base method for sending the vote.
@@ -80,11 +133,15 @@ class _Vote():
         :raises RuntimeError: Game not supported.
         """
         match GAME_NAME:
-            case "tf2":
-                VoteStart(self.vote_type.value, self.detail, is_yes_no_vote, 0,
-                          self.initiator).send(index)
+            case "tf":
+                vote = VoteStart(self.vote_type.value, self.detail,
+                                 is_yes_no_vote, 0, self.initiator)
             case _:
                 raise RuntimeError("Game not supported.")
+        if index is None:
+            vote.send()
+        else:
+            vote.send(index)
 
 @dataclass
 class MultiVoteOption():
@@ -107,12 +164,22 @@ class MultiVote(_Vote):
         :param int initiator: Client index of the initator of the vote.
         :param list[MultiVoteOption] items: A list of items to be included in the vote.
         :param str detail: Optional detail paramater for supported vote types.
+        :raises ValueError: Vote type not supported.
+        :raises RuntimeError: Game not supported.
         """
         if vote_type not in multi_vote_types:
             raise ValueError("Vote type not supported.")
+        if GAME_NAME not in ("tf", "csgo"):
+            raise RuntimeError("Game not supported.")
         super().__init__(vote_type, initiator, detail)
+        if len(items) > 5:
+            items = items[:5]
         self.items = items
 
     def send(self, index: int | None = None):
-        # TODO: Set vote_options entity before sending
+        vote_options_event = game_event_manager.create_event("vote_options", True)
+        vote_options_event.set_int("count", len(self.items))
+        for item in self.items:
+            vote_options_event.set_string(f"option{self.items.index(item) + 1}", item.display)
+        game_event_manager.fire_event(vote_options_event, True)
         super()._send(False, index)

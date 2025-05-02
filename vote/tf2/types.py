@@ -116,3 +116,11 @@ class CallVoteFailedReason(Enum):
     """Cannot kick during round. Used for MVM."""
     VOTE_FAILED_MODIFICATION_ALREADY_ACTIVE = 19
     """Modification is already active. Used by Eternaween."""
+
+VOTE_PASS_DEFAULT_REASONS = {
+    VoteTypes.KICK_IDLE: VotePassTypes.KICK,
+    VoteTypes.KICK_CHEATING: VotePassTypes.KICK,
+    VoteTypes.KICK_SCAMMING: VotePassTypes.KICK,
+    VoteTypes.NEXT_LEVEL_CHOICES: VotePassTypes.NEXT_LEVEL,
+    VoteTypes.SCRAMBLE_TEAMS_AT_ROUND_END: VotePassTypes.SCRAMBLE_TEAMS
+}
