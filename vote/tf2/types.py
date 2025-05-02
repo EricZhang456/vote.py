@@ -80,3 +80,39 @@ class VoteFailedReason(Enum):
     """Yes votes must outnumber No votes"""
     VOTE_FAILED_QUORUM_FAILURE = 4
     """Not enough votes"""
+
+class CallVoteFailedReason(Enum):
+    """Call vote failed reasons."""
+    VOTE_FAILED_TRANSITIONING_PLAYERS = 1
+    """Cannot call vote while other players are still loading. This appears to be a 
+    holdover from L4D2; use code 10 instead."""
+    VOTE_FAILED_RATE_EXCEEDED = 2
+    """You called a vote recently and cannot call another one for X seconds."""
+    VOTE_FAILED_ISSUE_DISABLED = 5
+    """Server has disabled that issue."""
+    VOTE_FAILED_MAP_NOT_FOUND = 6
+    """That map does not exist."""
+    VOTE_FAILED_MAP_NAME_REQUIRED = 7
+    """You must specify a map name."""
+    VOTE_FAILED_FAILED_RECENTLY = 8
+    """This vote failed recently."""
+    VOTE_FAILED_TEAM_CANT_CALL = 9
+    """Your team cannot call this vote."""
+    VOTE_FAILED_WAITINGFORPLAYERS = 10
+    """Voting not allowed while Waiting for Players."""
+    VOTE_FAILED_CANNOT_KICK_ADMIN = 12
+    """Can't Kick Server Admin."""
+    VOTE_FAILED_SCRAMBLE_IN_PROGRESS = 13
+    """Vote Scramble is pending."""
+    VOTE_FAILED_SPECTATOR = 14
+    """Spectators can't vote."""
+    VOTE_FAILED_NEXTLEVEL_SET = 15
+    """Next level already set."""
+    VOTE_FAILED_MAP_NOT_VALID = 16
+    """Map is not in the map list."""
+    VOTE_FAILED_CANNOT_KICK_FOR_TIME = 17
+    """Cannot kick yet. Used for MVM."""
+    VOTE_FAILED_CANNOT_KICK_DURING_ROUND = 18
+    """Cannot kick during round. Used for MVM."""
+    VOTE_FAILED_MODIFICATION_ALREADY_ACTIVE = 19
+    """Modification is already active. Used by Eternaween."""
