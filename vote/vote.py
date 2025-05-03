@@ -77,7 +77,7 @@ class _Vote():
         """
         raise NotImplementedError("Must be implemented in subclass.")
 
-    def send_pass_custom(self, pass_reason: VotePassTypes | None = None,
+    def send_pass(self, pass_reason: VotePassTypes | None = None,
                          detail: str = "", index: int | None = None):
         """Display a vote pass panel.
         
@@ -91,7 +91,7 @@ class _Vote():
         if pass_reason is None:
             default_reason = VOTE_PASS_DEFAULT_REASONS.get(self.vote_type)
             if default_reason is None:
-                pass_reason = getattr(VotePassTypes, self.vote_type.name)
+                pass_reason = VotePassTypes[self.vote_type.name].value
             else:
                 pass_reason = default_reason
         match GAME_NAME:
